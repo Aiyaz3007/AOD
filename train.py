@@ -11,7 +11,7 @@ import dataloader
 import net
 import numpy as np
 from torchvision import transforms
-from utils import updateTrainLoss,updateValLoss
+from utils import updateLoss
 from tqdm import tqdm
 from warnings import filterwarnings
 filterwarnings("ignore")
@@ -70,9 +70,8 @@ def train(config):
 
 		total_train_loss = round(train_loss.item()/len(train_loader),2)
 		trainLossList.append(total_train_loss)
-		print(f"Train Loss: {total_train_loss}")
-		updateTrainLoss(epochs=epochsList,
-				  		loss=trainLossList)
+		print(f"\nTrain Loss: {total_train_loss}")
+
 				
 				
 
@@ -92,12 +91,10 @@ def train(config):
 		# torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth") 
 		total_val_loss = round(val_loss.item()/len(val_loader),2)
 		valLossList.append(total_val_loss)
-		print(f"Val Loss: {total_val_loss}")
-		updateValLoss(epochs=epochsList,
-				  		loss=valLossList)
+		print(f"\nVal Loss: {total_val_loss}")
 		torch.save(dehaze_net.state_dict(), config.snapshots_folder + f"Epoch_{str(epoch)}_val_{val_loss/len(val_loader)}.pth") 
+		updateLoss(epochs=epochsList,trainloss=trainLossList,valloss=valLossList)
 		bar.update(1)
-
 
 
 
@@ -114,7 +111,7 @@ if __name__ == "__main__":
 	parser.add_argument('--weight_decay', type=float, default=0.0001)
 	parser.add_argument('--grad_clip_norm', type=float, default=0.1)
 	parser.add_argument('--num_epochs', type=int, default=10)
-	parser.add_argument('--train_batch_size', type=int, default=8)
+	parser.add_argument('--train_batch_size', type=int, default=16)
 	parser.add_argument('--val_batch_size', type=int, default=8)
 	parser.add_argument('--num_workers', type=int, default=4)
 	parser.add_argument('--display_iter', type=int, default=10)

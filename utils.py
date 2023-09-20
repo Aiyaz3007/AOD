@@ -1,12 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def updateTrainLoss(epochs:list,loss:list):
-    plt.title("train loss")
-    plt.plot(epochs,loss)
-    plt.savefig("TrainLoss.png")
+figure, axis = plt.subplots(1, 2)
 
-def updateValLoss(epochs:list,loss:list):
-    plt.title("val loss")
-    plt.plot(epochs,loss)
-    plt.savefig("ValLoss.png")
+def updateLoss(epochs:list,trainloss:list,valloss:list):
+    plt.title("train loss")
+    axis[0,0].plot(epochs,trainloss)
+    axis[0,1].plot(epochs,valloss)
+    figure.savefig("Loss.png")
