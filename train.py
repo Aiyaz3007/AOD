@@ -61,8 +61,9 @@ def train(config):
 			optimizer.step()
 			train_loss+=t_loss
 
-		trainLossList.append(round(train_loss/len(train_loader),2))
-		print(f"Train Loss: {train_loss/len(train_loader)}")
+		total_train_loss = round(train_loss.item()/len(train_loader),2)
+		trainLossList.append(total_train_loss)
+		print(f"Train Loss: {total_train_loss}")
 		updateTrainLoss(epochs=epochsList,
 				  		loss=trainLossList)
 				
@@ -74,17 +75,17 @@ def train(config):
 
 			img_orig = img_orig.cuda()
 			img_haze = img_haze.cuda()
-
-			clean_image = dehaze_net(img_haze)
-			v_loss = criterion(clean_image, img_orig)
-			val_loss += v_loss
+			clean_image = dehaze_net(img_haze)	
+			with torch.no_grad():
+				v_loss = criterion(clean_image, img_orig)
+				val_loss += v_loss
 
 			torchvision.utils.save_image(torch.cat((img_haze, clean_image, img_orig),0), config.sample_output_folder+str(epoch)+".jpg")
 
 		# torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth") 
-		
-		valLossList.append(round(val_loss/len(val_loader),2))
-		print(f"Val Loss: {val_loss/len(val_loader)}")
+		total_val_loss = round(val_loss.item()/len(val_loader),2)
+		valLossList.append(total_val_loss)
+		print(f"Val Loss: {total_val_loss}")
 		updateValLoss(epochs=epochsList,
 				  		loss=valLossList)
 		torch.save(dehaze_net.state_dict(), config.snapshots_folder + f"Epoch_{str(epoch)}_val_{val_loss/len(val_loader)}.pth") 
