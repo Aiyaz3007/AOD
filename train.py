@@ -11,7 +11,7 @@ import dataloader
 import net
 import numpy as np
 from torchvision import transforms
-
+from utils import updateTrainLoss,updateValLoss
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -38,8 +38,14 @@ def train(config):
 	optimizer = torch.optim.Adam(dehaze_net.parameters(), lr=config.lr, weight_decay=config.weight_decay)
 	
 	dehaze_net.train()
+	epochsList = []
+	trainLossList = []
+	valLossList = []
 
 	for epoch in range(config.num_epochs):
+		epochsList.append(epoch)
+		train_loss = 0
+		val_loss = 0
 		for iteration, (img_orig, img_haze) in enumerate(train_loader):
 
 			img_orig = img_orig.cuda()
@@ -47,33 +53,41 @@ def train(config):
 
 			clean_image = dehaze_net(img_haze)
 
-			loss = criterion(clean_image, img_orig)
+			t_loss = criterion(clean_image, img_orig)
 
 			optimizer.zero_grad()
-			loss.backward()
+			t_loss.backward()
 			torch.nn.utils.clip_grad_norm(dehaze_net.parameters(),config.grad_clip_norm)
 			optimizer.step()
+			train_loss+=t_loss
 
-			if ((iteration+1) % config.display_iter) == 0:
-				print("Loss at iteration", iteration+1, ":", loss.item())
-			if ((iteration+1) % config.snapshot_iter) == 0:
+		trainLossList.append(round(train_loss/len(train_loader),2))
+		print(f"Train Loss: {train_loss/len(train_loader)}")
+		updateTrainLoss(epochs=epochsList,
+				  		loss=trainLossList)
 				
-				torch.save(dehaze_net.state_dict(), config.snapshots_folder + "Epoch" + str(epoch) + '.pth') 		
+				
 
 		# Validation Stage
+		
 		for iter_val, (img_orig, img_haze) in enumerate(val_loader):
 
 			img_orig = img_orig.cuda()
 			img_haze = img_haze.cuda()
 
 			clean_image = dehaze_net(img_haze)
+			v_loss = criterion(clean_image, img_orig)
+			val_loss += v_loss
 
-			torchvision.utils.save_image(torch.cat((img_haze, clean_image, img_orig),0), config.sample_output_folder+str(iter_val+1)+".jpg")
+			torchvision.utils.save_image(torch.cat((img_haze, clean_image, img_orig),0), config.sample_output_folder+str(epoch)+".jpg")
 
-		torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth") 
-
-			
-
+		# torch.save(dehaze_net.state_dict(), config.snapshots_folder + "dehazer.pth") 
+		
+		valLossList.append(round(val_loss/len(val_loader),2))
+		print(f"Val Loss: {val_loss/len(val_loader)}")
+		updateValLoss(epochs=epochsList,
+				  		loss=valLossList)
+		torch.save(dehaze_net.state_dict(), config.snapshots_folder + f"Epoch_{str(epoch)}_val_{val_loss/len(val_loader)}.pth") 
 
 
 
