@@ -12,6 +12,7 @@ import net
 import numpy as np
 from torchvision import transforms
 from utils import updateTrainLoss,updateValLoss
+from tqdm import tqdm
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -41,6 +42,9 @@ def train(config):
 	epochsList = []
 	trainLossList = []
 	valLossList = []
+	
+
+	bar = tqdm(total=config.num_epochs)
 
 	for epoch in range(config.num_epochs):
 		epochsList.append(epoch)
@@ -89,7 +93,7 @@ def train(config):
 		updateValLoss(epochs=epochsList,
 				  		loss=valLossList)
 		torch.save(dehaze_net.state_dict(), config.snapshots_folder + f"Epoch_{str(epoch)}_val_{val_loss/len(val_loader)}.pth") 
-
+		bar.update(1)
 
 
 
