@@ -13,6 +13,8 @@ import numpy as np
 from torchvision import transforms
 from utils import updateTrainLoss,updateValLoss
 from tqdm import tqdm
+from warnings import filterwarnings("ignore")
+
 
 def weights_init(m):
     classname = m.__class__.__name__
